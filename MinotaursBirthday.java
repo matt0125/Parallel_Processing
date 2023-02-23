@@ -22,15 +22,49 @@ public class MinotaursBirthday
     {
 
         _numThreads = Integer.valueOf(args[0]);
+        setArgs(args);
+
+        System.out.println("The minotaur invited " + _numThreads + " guests to his party. I hope they all like labyrinths and cupcakes!");
+        _labyrinth = new ReentrantLock();
+        
+        createThreads();
+        createMinotaur();
+
+        party();
+
+        System.out.println("They sure did! All " + _numThreads + " of them!");
+    }
+
+    public static void setArgs(String [] args)
+    {
+        try{
+            if(Integer.valueOf(args[0]) < 0)
+                throw new IllegalArgumentException();
+            }
+        catch(IllegalArgumentException f)
+            {
+                System.out.println("ERROR: Please compile with integer x > 0");
+                System.out.println("    Where x = number of guests (threads)");
+                return;
+            }
+        catch(Exception e)
+            {
+                System.out.println("ERROR: Please compile with an integer x");
+                System.out.println("    Where x = number of guests (threads)");
+                return;
+            }
+
+        _numThreads = Integer.valueOf(args[0]);
         
         if(args.length > 1)
         {
             // Check for -p
+            
 
             for (int i = 1; i < args.length; i++)
                 try
                 {
-                    if(args[i].charAt(0) == '-' && (args[i].toLowerCase().charAt(0) == 'p' || args[i].toLowerCase().charAt(0) == 'r'))
+                    if(args[i].charAt(0) == '-' && (args[i].toLowerCase().charAt(1) == 'p' || args[i].toLowerCase().charAt(1) == 'r'))
                     {
                         if(args[i].toLowerCase().charAt(1) == 'p')
                             _print = true;
@@ -46,16 +80,6 @@ public class MinotaursBirthday
                     System.out.println("       reference readme for valid arguments");
                 }
         }
-
-        System.out.println("The minotaur invited " + _numThreads + " guests to his party. I hope they all like labyrinths and cupcakes!");
-        _labyrinth = new ReentrantLock();
-        
-        createThreads();
-        createMinotaur();
-
-        party();
-
-        System.out.println("They sure did! All " + _numThreads + " of them!");
     }
     
     public static void createThreads()
@@ -65,7 +89,7 @@ public class MinotaursBirthday
 
         for (int i = 0; i < _numThreads; i++)
         {
-            _threads[i] = new Thread(new BirthdayThread(i, _numThreads, _labyrinth, _currentGuest));
+            _threads[i] = new Thread(new BirthdayThread(i, _numThreads, _labyrinth, _currentGuest, _print));
         }
     }
 
@@ -99,9 +123,13 @@ public class MinotaursBirthday
     
     public static void enterMaze()
     {
-        
+        int time;
+        if(_random)
+            time = _rand.nextInt(1000) + 500;
+        else
+            time = 1000;
         try {
-            Thread.sleep((new Random()).nextInt(1000));
+            Thread.sleep((new Random()).nextInt(time));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -144,23 +172,26 @@ class BirthdayThread implements Runnable
     private int _numGuests;
     private ReentrantLock _lab;
     private AtomicInteger _currentGuest;
+    private boolean _print;
 
-    public BirthdayThread(int guestNumber, int numGuests, ReentrantLock lab, AtomicInteger currentGuest) 
+    public BirthdayThread(int guestNumber, int numGuests, ReentrantLock lab, AtomicInteger currentGuest, boolean print) 
     {
         _guestNumber = guestNumber;
         _numGuests = numGuests;
         _memory = new boolean[numGuests];
         _lab = lab;
         _currentGuest = currentGuest;
+        _print = print;
     }
 
     public boolean enterMaze()
     {
+        
         _lab.lock();
         MinotaursBirthday.enterMaze();
-        MinotaursBirthday.resetGuest();
-        print();
+        if(_print) print();
         _lab.unlock();
+        MinotaursBirthday.resetGuest();
         return true;
     }
 
@@ -200,10 +231,9 @@ class BirthdayThread implements Runnable
                 ateCupcake = enterMaze();
             }
 
-            // if(upNext != -1)
-                _memory[upNext] = true;
+            _memory[upNext] = true;
 
-            if (ateCupcake && checkMemory())
+            if (checkMemory() && ateCupcake)
                 return;
         
             try {
@@ -236,7 +266,7 @@ class BirthdayMinotaurThread implements Runnable
                 MinotaursBirthday.resetGuest(_rand.nextInt(_numGuests));   
             }
             try {
-                Thread.sleep(30);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
