@@ -6,6 +6,12 @@ Professor Juan Parra
 <h4>Table of contents</h4>
 <ul>
   <li>
+    <a href="#minotaursbirthdayjava"><b>Assignment 2-1: Minotaur's Birthday Party</b></a>
+    <ul>
+      <li><a href="#my-approach">Summary of Approach</a></li>
+     </ul>
+  </li>
+  <li>
     <a href="#primejava"><b>Assignment 1-2: Primes</b></a>
     <ul>
       <li><a href="#summary-of-approach">Summary of Approach</a></li>
@@ -13,6 +19,49 @@ Professor Juan Parra
     </ul>
   </li>
 </ul>
+
+## MinotaursBirthday.java
+
+### Problem
+
+The Minotaur invited N guests to his birthday party. When the guests arrived, he made the following announcement.
+
+The guests may enter his labyrinth, one at a time and only when he invites them to do so. At the end of the labyrinth, the Minotaur placed a birthday cupcake on a plate. When a guest finds a way out of the labyrinth, he or she may decide to eat the birthday cupcake or leave it. If the cupcake is eaten by the previous guest, the next guest will find the cupcake plate empty and may request another cupcake by asking the Minotaur’s servants. When the servants bring a new cupcake the guest may decide to eat it or leave it on the plate.
+
+The Minotaur’s only request for each guest is to not talk to the other guests about her or his visit to the labyrinth after the game has started. The guests are allowed to come up with a strategy prior to the beginning of the game. There are many birthday cupcakes, so the Minotaur may pick the same guests multiple times and ask them to enter the labyrinth. Before the party is over, the Minotaur wants to know if all of his guests have had the chance to enter his labyrinth. To do so, the guests must announce that they have all visited the labyrinth at least once.
+
+Now the guests must come up with a strategy to let the Minotaur know that every guest entered the Minotaur’s labyrinth. It is known that there is already a birthday cupcake left at the labyrinth’s exit at the start of the game. How would the guests do this and not disappoint his generous and a bit temperamental host?
+
+Create a program to simulate the winning strategy (protocol) where each guest is represented by one running thread. In your program you can choose a concrete number for N or ask the user to specify N at the start.
+
+### Solution
+
+To compile and run:
+  ```sh
+  javac MinotaursBirthday.java
+  ```
+To run:
+  ```sh
+  Suggested:
+  java MinotaursBirthday x -p -r
+  ```
+  ```
+  Args:
+  int x = number of guests (threads) that attend the party
+  -p -> prints the party guests that enter the labyrnith
+  -r -> assigns a random amount of time each guest takes in the labyrinth
+  ```
+Output:
+  ```
+  Console
+  ```
+
+### My Approach:
+My approach strongly relies on the fact that each guest can see who enters the labyrinth. Since each guest can both request and eat a cupcake at the end of the maze, they all planned on doing so every time they enter. Another thing about the guests is they have a really good memory. Every time they see someone enther the maze they take note of it and after they've seen everyone enter the maze, they know they've already made the manotaur happy so the party ends right then and there.
+
+With that, each thread has its own binary array of length numGuests. They are almost constantly checking to see who the manotaur picked next and they update thier memory every time they check whos next. If they were picked, they enter the maze, request a new cupcake and eat it before exiting the maze, unlocking it and letting the manotaur know the maze is ready for a new guest. The manotaur always picks a new guest after someone leaves until the guests collectively tell him its over.
+
+My program scales well and can handle over 1000 guests, though it is not reccomended due to execution time. One of the challenges of this assignment was the nature that the threads cannot talk to each other. While yes, they do share an atomic integer, it signifies every guest can see who goes into the maze at all times. They each still have their own notes of who went in to the maze and still have to notifiy the manotaur that they exited it.
 
 ## Prime.java
 
