@@ -8,19 +8,27 @@ Professor Juan Parra
   <li>
     <a href="#minotaursbirthdayjava"><b>Assignment 2-1: Minotaur's Birthday Party</b></a>
     <ul>
-      <li><a href="#my-approach">Summary of Approach</a></li>
+      <li><a href="#summary-of-approach">Summary of Approach</a></li>
+      <li><a href="#correctness">Correctness</a></li>
+     </ul>
+  </li>
+  <li>
+    <a href="#minotraurscrystalvasejava"><b>Assignment 2-2: Minotaur's Birthday Party</b></a>
+    <ul>
+      <li><a href="#summary-of-approach">Summary of Approach</a></li>
+      <li><a href="#experimental-evaluation">Experimental Evaluation</a></li>
      </ul>
   </li>
   <li>
     <a href="#primejava"><b>Assignment 1-2: Primes</b></a>
     <ul>
-      <li><a href="#summary-of-approach">Summary of Approach</a></li>
-      <li><a href="#experimental-evaluation">Experimental Evaluation</a></li>
+      <li><a href="#summary-of-approach-2">Summary of Approach</a></li>
+      <li><a href="#experimental-evaluation-1">Experimental Evaluation</a></li>
     </ul>
   </li>
 </ul>
 
-## MinotraursBirthday.java
+## MinotaursBirthday.java
 
 ### Problem
 
@@ -52,7 +60,7 @@ To run:
   ```
 Output ->  **Console**
 
-### My Approach:
+### Summary of approach:
 My approach strongly relies on the fact that each guest can see who enters the labyrinth. Since each guest can both request and eat a cupcake at the end of the maze, they all planned on doing so every time they enter. Another thing about the guests is they have a really good memory. Every time they see someone enther the maze they take note of it and after they've seen everyone enter the maze, they know they've already made the manotaur happy so the party ends right then and there.
 
 With that, each thread has its own binary array of length numGuests. They are almost constantly checking to see who the manotaur picked next and they update thier memory every time they check whos next. If they were picked, they enter the maze, request a new cupcake and eat it before exiting the maze, unlocking it and letting the manotaur know the maze is ready for a new guest. The manotaur always picks a new guest after someone leaves until the guests collectively tell him its over.
@@ -92,14 +100,15 @@ To run:
   ```
 Output ->  **Console**
 
-### My Approach:
+### Summary of approach:
 
 To solve this problem, I decided to implement all three solutions, initally thinking option 2 would be the best one. Each solution was a little different in nature:
 1) For the first solution, I implemented a single lock shared between all of the threads (guests) and it was a fist come first serve situation. While yes, this might cause a lot of people waiting outside of the door, this ensures that everyone will eventually get in on their first try
 2) For the second solution, I also implemented a single shared lock between all of the guests but this time I used a random try-lock. This way, guests could swing by and see if the sign was "AVAILABLE" and continue on thier day. The problem with this is there are times when no one is by the door when the last person flips the sign causing some lost time inbetween people being in awe - not good for runtime.
 3) For the third solution, I created relationships between pairs of threads in order of which they appeared in the queue. Doing this, each guest had an object they shared with the person infront of them and one with the person behind them. I believe this is one of the only ways threads can notify the next person in line utalizing wait and notify. This ended up being almost exactly how a lock acts - just adding the computation time of creating those relationships and enforcing them.
 
-### Correctness:
+
+### Experimental evaluation:
 
 When timing each approach, I discovered some interesting results. The third method is much btter compared to the others at first in smaller numbers and then as it shoots up in time, the first method breaks free as the winner. If I had to guess why this is, I would have to say the time taken to create the objects required for option 3 grows faster than the time taken to wait for a lock in option 1. These numbers were curated by taking the average of 5 runs of each method. While they are interesting numbers, the true answer is apparent - method 1 is the best option when it comes to larger gatherings and method 3 is the best when the party is a little more personal.
 
