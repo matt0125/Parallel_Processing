@@ -50,10 +50,7 @@ To run:
   -p -> turns off printing the party guests that enter the labyrnith
   -r -> turns off assigning a random amount of time (5-15 ms) each guest takes in the labyrinth (defaults to 100 each time)
   ```
-Output:
-  ```
-  Console
-  ```
+Output ->  **Console**
 
 ### My Approach:
 My approach strongly relies on the fact that each guest can see who enters the labyrinth. Since each guest can both request and eat a cupcake at the end of the maze, they all planned on doing so every time they enter. Another thing about the guests is they have a really good memory. Every time they see someone enther the maze they take note of it and after they've seen everyone enter the maze, they know they've already made the manotaur happy so the party ends right then and there.
@@ -64,6 +61,83 @@ My program scales well and can handle over 1000 guests, though it is not reccome
 
 ### Correctness:
 Knowing that I am using wait and notify, I know that threads arent wasting computation power continuously checking to see if another thread entered the maze. Also, with this set up, I know each thread is taking notes of who went into the maze and checking to see if that was the last person that needed to eat thier cupcake before the party was over the instance the next person entered the maze. I also know this wouldn't be a problem ending early because the last person will not end the party until they are out of the maze.
+
+## MinotraursCrystalVase.java
+
+### Problem
+
+The Minotaur decided to show his favorite crystal vase to his guests in a dedicated showroom with a single door. He did not want many guests to gather around the vase and accidentally break it. For this reason, he would allow only one guest at a time into the showroom. He asked his guests to choose from one of three possible strategies for viewing the Minotaur’s favorite crystal vase:
+1) Any guest could stop by and check whether the showroom’s door is open at any time and try to enter the room. While this would allow the guests to roam around the castle and enjoy the party, this strategy may also cause large crowds of eager guests to gather around the door. A particular guest wanting to see the vase would also have no guarantee that she or he will be able to do so and when.
+2) The Minotaur’s second strategy allowed the guests to place a sign on the door indicating when the showroom is available. The sign would read “AVAILABLE” or “BUSY.” Every guest is responsible to set the sign to “BUSY” when entering the showroom and back to “AVAILABLE” upon exit. That way guests would not bother trying to go to the showroom if it is not available.
+3) The third strategy would allow the quests to line in a queue. Every guest exiting the room was responsible to notify the guest standing in front of the queue that the showroom is available. Guests were allowed to queue multiple times.
+
+Which of these three strategies should the guests choose? Please discuss the advantages and disadvantages.
+Implement the strategy/protocol of your choice where each guest is represented by 1 running thread. You can choose a concrete number for the number of guests or ask the user to specify it at the start.
+
+### Solution
+
+To compile and run:
+  ```sh
+  javac MinotaursBirthday.java
+  ```
+To run:
+  ```sh
+  java MinotaursBirthday {int x} {int y}
+  ```
+  ```
+  Args:
+  int x = number of guests (threads) that attend the party
+  int y = solution number as listed in Problem above
+  -p -> turns off printing the party guests that enter the labyrnith
+  ```
+Output ->  **Console**
+
+### My Approach:
+
+To solve this problem, I decided to implement all three solutions, initally thinking option 2 would be the best one. Each solution was a little different in nature:
+1) For the first solution, I implemented a single lock shared between all of the threads (guests) and it was a fist come first serve situation. While yes, this might cause a lot of people waiting outside of the door, this ensures that everyone will eventually get in on their first try
+2) For the second solution, I also implemented a single shared lock between all of the guests but this time I used a random try-lock. This way, guests could swing by and see if the sign was "AVAILABLE" and continue on thier day. The problem with this is there are times when no one is by the door when the last person flips the sign causing some lost time inbetween people being in awe - not good for runtime.
+3) For the third solution, I created relationships between pairs of threads in order of which they appeared in the queue. Doing this, each guest had an object they shared with the person infront of them and one with the person behind them. I believe this is one of the only ways threads can notify the next person in line utalizing wait and notify. This ended up being almost exactly how a lock acts - just adding the computation time of creating those relationships and enforcing them.
+
+### Correctness:
+
+When timing each approach, I discovered some interesting results. The third method is much btter compared to the others at first in smaller numbers and then as it shoots up in time, the first method breaks free as the winner. If I had to guess why this is, I would have to say the time taken to create the objects required for option 3 grows faster than the time taken to wait for a lock in option 1. These numbers were curated by taking the average of 5 runs of each method. While they are interesting numbers, the true answer is apparent - method 1 is the best option when it comes to larger gatherings and method 3 is the best when the party is a little more personal.
+
+<table>
+          <thead>
+            <tr>
+              <th colspan="4">Average Execution Time Per Method</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td> Guest Count </td>
+              <td> 8 </td>
+              <td> 64 </td>
+              <td> <b>100</b> </td>
+            </tr>
+            <tr>
+              <td> Method 1 </td>
+              <td> 102 ms</td>
+              <td> 111 ms </td>
+              <td> 128 ms </td>
+            </tr>
+            <tr>
+              <td> Method 2 </td>
+              <td> 68 ms </td>
+              <td> 172 ms </td>
+              <td> 212 ms </td>
+            </tr>
+            <tr>
+              <td> Method 3 </td>
+              <td> 24 ms </td>
+              <td> 115 ms </td>
+              <td> 172 ms </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+</table>
 
 ## Prime.java
 
