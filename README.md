@@ -20,7 +20,7 @@ Professor Juan Parra
   </li>
 </ul>
 
-## MinotaursBirthday.java
+## MinotraursBirthday.java
 
 ### Problem
 
@@ -42,14 +42,13 @@ To compile and run:
   ```
 To run:
   ```sh
-  Suggested:
-  java MinotaursBirthday x -p -r
+  java MinotaursBirthday {int x}
   ```
   ```
   Args:
-  int x = number of guests (threads) that attend the party
-  -p -> prints the party guests that enter the labyrnith
-  -r -> assigns a random amount of time each guest takes in the labyrinth
+  {int x} = number of guests (threads) that attend the party
+  -p -> turns off printing the party guests that enter the labyrnith
+  -r -> turns off assigning a random amount of time (5-15 ms) each guest takes in the labyrinth (defaults to 100 each time)
   ```
 Output:
   ```
@@ -62,6 +61,9 @@ My approach strongly relies on the fact that each guest can see who enters the l
 With that, each thread has its own binary array of length numGuests. They are almost constantly checking to see who the manotaur picked next and they update thier memory every time they check whos next. If they were picked, they enter the maze, request a new cupcake and eat it before exiting the maze, unlocking it and letting the manotaur know the maze is ready for a new guest. The manotaur always picks a new guest after someone leaves until the guests collectively tell him its over.
 
 My program scales well and can handle over 1000 guests, though it is not reccomended due to execution time. One of the challenges of this assignment was the nature that the threads cannot talk to each other. While yes, they do share an atomic integer, it signifies every guest can see who goes into the maze at all times. They each still have their own notes of who went in to the maze and still have to notifiy the manotaur that they exited it.
+
+### Correctness:
+Knowing that I am using wait and notify, I know that threads arent wasting computation power continuously checking to see if another thread entered the maze. Also, with this set up, I know each thread is taking notes of who went into the maze and checking to see if that was the last person that needed to eat thier cupcake before the party was over the instance the next person entered the maze. I also know this wouldn't be a problem ending early because the last person will not end the party until they are out of the maze.
 
 ## Prime.java
 
