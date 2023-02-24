@@ -1,5 +1,4 @@
 import java.util.Random;
-import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -12,16 +11,15 @@ public class MinotaursBirthday
     private static boolean _cupcake = true;
     private static AtomicInteger _currentGuest;
     private static boolean _party = true;
-    private static boolean _reset = true;
-    private static boolean _print = false;
-    private static boolean _random = false;
+    private static boolean _print = true;
+    private static boolean _random = true;
     private static Random _rand;
+    private static Object _guests = new Object();
+    private static Object _Minotaur = new Object();
     
 
     public static void main(String [] args) throws InterruptedException
     {
-
-        _numThreads = Integer.valueOf(args[0]);
         setArgs(args);
 
         System.out.println("The minotaur invited " + _numThreads + " guests to his party. I hope they all like labyrinths and cupcakes!");
@@ -33,6 +31,7 @@ public class MinotaursBirthday
         party();
 
         System.out.println("They sure did! All " + _numThreads + " of them!");
+        System.exit(0);
     }
 
     public static void setArgs(String [] args)
@@ -67,9 +66,9 @@ public class MinotaursBirthday
                     if(args[i].charAt(0) == '-' && (args[i].toLowerCase().charAt(1) == 'p' || args[i].toLowerCase().charAt(1) == 'r'))
                     {
                         if(args[i].toLowerCase().charAt(1) == 'p')
-                            _print = true;
+                            _print = false;
                         if(args[i].toLowerCase().charAt(1) == 'r')
-                            _random = true;
+                            _random = false;
                     }
                     else
                         throw new IllegalArgumentException();
@@ -89,14 +88,14 @@ public class MinotaursBirthday
 
         for (int i = 0; i < _numThreads; i++)
         {
-            _threads[i] = new Thread(new BirthdayThread(i, _numThreads, _labyrinth, _currentGuest, _print));
+            _threads[i] = new Thread(new BirthdayThread(i, _numThreads, _labyrinth, _currentGuest, _print, _guests, _Minotaur));
         }
     }
 
     public static void createMinotaur()
     {
         _rand = new Random();
-        _minotaur = new Thread(new BirthdayMinotaurThread(_numThreads));
+        _minotaur = new Thread(new BirthdayMinotaurThread(_numThreads, _guests, _Minotaur));
     }
 
     public static void party() throws InterruptedException
@@ -114,20 +113,14 @@ public class MinotaursBirthday
         }
         _party = false;
     }
-
-    
-    public static boolean readyForReset()
-    {
-        return _reset;
-    }
     
     public static void enterMaze()
     {
         int time;
         if(_random)
-            time = _rand.nextInt(1000) + 500;
+            time = _rand.nextInt(10) + 5;
         else
-            time = 1000;
+            time = 100;
         try {
             Thread.sleep((new Random()).nextInt(time));
         } catch (InterruptedException e) {
@@ -138,16 +131,8 @@ public class MinotaursBirthday
         requestCupcake();   
         eatCupcake();
     }
-    public static void resetGuest()
-    {
-        _reset = true;
-    }
-    public static void resetGuest2()
-    {
-        _reset = true;                          // Make new manotaur
-    }
+
     public static void resetGuest(int newGuest) {
-        _reset = false;
         _currentGuest.set(newGuest);
     }
     private static void requestCupcake()
@@ -173,8 +158,10 @@ class BirthdayThread implements Runnable
     private ReentrantLock _lab;
     private AtomicInteger _currentGuest;
     private boolean _print;
+    private static Object _guests = new Object();
+    private static Object _minotaur = new Object();
 
-    public BirthdayThread(int guestNumber, int numGuests, ReentrantLock lab, AtomicInteger currentGuest, boolean print) 
+    public BirthdayThread(int guestNumber, int numGuests, ReentrantLock lab, AtomicInteger currentGuest, boolean print, Object guests, Object minoataur) 
     {
         _guestNumber = guestNumber;
         _numGuests = numGuests;
@@ -182,6 +169,8 @@ class BirthdayThread implements Runnable
         _lab = lab;
         _currentGuest = currentGuest;
         _print = print;
+        _guests = guests;
+        _minotaur = minoataur;
     }
 
     public boolean enterMaze()
@@ -191,7 +180,6 @@ class BirthdayThread implements Runnable
         MinotaursBirthday.enterMaze();
         if(_print) print();
         _lab.unlock();
-        MinotaursBirthday.resetGuest();
         return true;
     }
 
@@ -221,27 +209,53 @@ class BirthdayThread implements Runnable
     public void run()
     {
         boolean ateCupcake = false;
+        boolean justEnteredMaze = false;
         int upNext;
         while(true)
         {
+
+            if(!justEnteredMaze)
+            {
+                synchronized(_guests)
+                {
+                    try {
+                        _guests.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            else
+                justEnteredMaze = false;
+
             upNext = _currentGuest.get();
 
             if(upNext == _guestNumber)
             {
                 ateCupcake = enterMaze();
+                justEnteredMaze = true;
             }
 
             _memory[upNext] = true;
 
             if (checkMemory() && ateCupcake)
+            {
+                if(justEnteredMaze)
+                {
+                    synchronized(_minotaur)
+                    {
+                        _minotaur.notify();
+                    }
+                }
                 return;
-        
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
-
+            if(justEnteredMaze)
+            {
+                synchronized(_minotaur)
+                {
+                    _minotaur.notify();
+                }
+            }
         }
     }
 }
@@ -250,25 +264,40 @@ class BirthdayMinotaurThread implements Runnable
 {
     private int _numGuests;
     private Random _rand;
+    private static Object _guests = new Object();
+    private static Object _minotaur = new Object();
+    
 
-    public BirthdayMinotaurThread(int numGuests) 
+    public BirthdayMinotaurThread(int numGuests, Object guests, Object minoataur) 
     {
         _numGuests = numGuests;
         _rand = new Random();
+        _guests = guests;
+        _minotaur = minoataur;
     }
 
     public void run()
     {
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         while(MinotaursBirthday.partyStatus())
         {
-            if(MinotaursBirthday.readyForReset())
+            synchronized(_guests)
             {
-                MinotaursBirthday.resetGuest(_rand.nextInt(_numGuests));   
+                MinotaursBirthday.resetGuest(_rand.nextInt(_numGuests));
+                _guests.notifyAll();
             }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            synchronized(_minotaur)
+            {
+                try {
+                    if(MinotaursBirthday.partyStatus())
+                        _minotaur.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
