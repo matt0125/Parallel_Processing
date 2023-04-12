@@ -6,27 +6,70 @@ Professor Juan Parra
 <h4>Table of contents</h4>
 <ul>
   <li>
+    <a href="#primejava"><b>Assignment 1-2: Primes</b></a>
+    <ul>
+      <li><a href="#summary-of-approach-3">Summary of Approach</a></li>
+      <li><a href="#experimental-evaluation-1">Experimental Evaluation</a></li>
+    </ul>
+  <li>
     <a href="#minotaursbirthdayjava"><b>Assignment 2-1: Minotaur's Birthday Party</b></a>
     <ul>
-      <li><a href="#summary-of-approach">Summary of Approach</a></li>
-      <li><a href="#correctness">Correctness</a></li>
+      <li><a href="#summary-of-approach-1">Summary of Approach</a></li>
+      <li><a href="#correctness-1">Correctness</a></li>
      </ul>
   </li>
   <li>
     <a href="#minotraurscrystalvasejava"><b>Assignment 2-2: Minotaur's Birthday Party</b></a>
     <ul>
-      <li><a href="#summary-of-approach">Summary of Approach</a></li>
+      <li><a href="#summary-of-approach-2">Summary of Approach</a></li>
       <li><a href="#experimental-evaluation">Experimental Evaluation</a></li>
      </ul>
   </li>
   <li>
-    <a href="#primejava"><b>Assignment 1-2: Primes</b></a>
+    <a href="#atrmjava"><b>Assignment 3-2: Atmospheric Temperature Reading Module </b></a>
     <ul>
-      <li><a href="#summary-of-approach-2">Summary of Approach</a></li>
-      <li><a href="#experimental-evaluation-1">Experimental Evaluation</a></li>
-    </ul>
+      <li><a href="#summary-of-approach">Summary of Approach</a></li>
+      <li><a href="#correctness">Correctness</a></li>
+     </ul>
+  </li>
   </li>
 </ul>
+
+## ATRM.java
+
+### Problem
+
+You are tasked with the design of the module responsible for measuring the atmospheric temperature of the next generation Mars Rover, equipped with a multicore CPU and 8 temperature sensors. The sensors are responsible for collecting temperature readings at regular intervals and storing them in shared memory space. The atmospheric temperature module has to compile a report at the end of every hour, comprising the top 5 highest temperatures recorded for that hour, the top 5 lowest temperatures recorded for that hour, and the 10-minute interval of time when the largest temperature difference was observed. The data storage and retrieval of the shared memory region must be carefully handled, as we do not want to delay a sensor and miss the interval of time when it is supposed to conduct temperature reading. Design and implement a solution using 8 threads that will offer a solution for this task. Assume that the temperature readings are taken every 1 minute. In your solution, simulate the operation of the temperature reading sensor by generating a random number from -100F to 70F at every reading.
+
+### Solution
+
+To compile and run:
+  ```sh
+  javac ATRM.java
+  ```
+To run:
+  ```sh
+  java ATRM {int h}
+  ```
+  ```
+  Args:
+  {int h} optional = number of hours to log; defaults to 3
+  ```
+Output ->  **Console**
+
+### Summary of approach:
+
+Due to the nature of the problem, I could not risk missing any temperature readings by sleeping any of the threads. Because of this, I utalized spin locks and made sure that any operations I performed were within the temperature reading intervals. While the current time wasnt a whole number value of the temperature reading interval, each thread would spin and wait until the next time it was supposed to read a temperature. This method gives the thread room to do any operations they might need to do.
+
+While using a spin lock does work well in this case, it's not the most processor efficient solution. For example, one thread using a spin lock to keep track of time and notifing other threads using a shared object would be a more efficient solution and is the other thing I might change if I were to do it again.
+
+### Correctness
+
+To ensure data protection, I used a mix of shared volatile integers as well as synchronized methods. Any data the threads would need to read such as the current largest number in the 5 smallest numbers array was labeled as volatile. When a thread wants to add a number to that array, it used a synchronized method and re-checked the condition that lead it to call that method before it did anything.
+
+By only using a spin lock, I guarentee that my program will eventually finish. This is due to my condition in the spin lock being dependant on System.currentTimeMillis(). Another fail-safe that I have in place is any time a thread calls to loop, I make it wait a single millisecond. This is to ensure that no thread iterates more than its meant to. By letting the time increase by a millisecond, the thread cannot break out of the spin lock twice at the same time.
+
+
 
 ## MinotaursBirthday.java
 
@@ -61,6 +104,7 @@ To run:
 Output ->  **Console**
 
 ### Summary of approach:
+
 My approach strongly relies on the fact that each guest can see who enters the labyrinth. Since each guest can both request and eat a cupcake at the end of the maze, they all planned on doing so every time they enter. Another thing about the guests is they have a really good memory. Every time they see someone enther the maze they take note of it and after they've seen everyone enter the maze, they know they've already made the manotaur happy so the party ends right then and there.
 
 With that, each thread has its own binary array of length numGuests. They are almost constantly checking to see who the manotaur picked next and they update thier memory every time they check whos next. If they were picked, they enter the maze, request a new cupcake and eat it before exiting the maze, unlocking it and letting the manotaur know the maze is ready for a new guest. The manotaur always picks a new guest after someone leaves until the guests collectively tell him its over.
